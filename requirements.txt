@@ -4,3 +4,7 @@ requests
 dbt-core
 dbt-postgres
 psycopg2-binary
+pandas
+openpyxl
+requests
+python-dotenv

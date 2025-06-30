@@ -1,7 +1,8 @@
 version: '3'
 
 services:
-  # Servicio de base de datos PostgreSQL para Airflow y staging
+
+  # Servicio de base de datos PostgreSQL para Airflow
   postgres:
     image: postgres:13
     container_name: postgres
@@ -12,28 +13,30 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persistencia de datos de Postgres
+      - postgres_data:/var/lib/postgresql/data
 
-  # Servicio que inicializa la base de datos de Airflow (solo corre una vez)
+  # Inicializa la base de datos de Airflow
   airflow-init:
     image: apache/airflow:2.5.1
+    container_name: airflow-init
     depends_on:
       - postgres
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor  # Ejecuta tareas localmente
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow  # Conexión a Postgres
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
     entrypoint: ["/bin/bash", "-c"]
-    command: ["airflow db init"]  # Crea tablas y metadatos de Airflow
+    command: ["airflow db init"]
     volumes:
-      - ./airflow/dags:/opt/airflow/dags      # DAGs compartidos
-      - ./airflow/logs:/opt/airflow/logs      # Logs persistentes
-      - ./airflow/plugins:/opt/airflow/plugins  # Plugins personalizados
-      - ./airflow/data:/opt/airflow/data      # Área de staging para CSVs
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
 
-  # Webserver de Airflow: interfaz web para ver y ejecutar DAGs
+  # Webserver de Airflow
   airflow-webserver:
     image: apache/airflow:2.5.1
+    container_name: airflow-webserver
     depends_on:
       - postgres
       - airflow-init
@@ -42,18 +45,21 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      DATA_RAW_PATH: /opt/airflow/data/raw/
+      DATA_STAGING_PATH: /opt/airflow/data/
     ports:
-      - "8080:8080"  # Exponer UI de Airflow
+      - "8080:8080"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/data:/opt/airflow/data
-    command: webserver  # Iniciar el server web
+      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+    command: webserver
 
-  # Scheduler: orquesta tareas programadas
+  # Scheduler de Airflow
   airflow-scheduler:
     image: apache/airflow:2.5.1
+    container_name: airflow-scheduler
     depends_on:
       - postgres
       - airflow-init
@@ -62,12 +68,15 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      DATA_RAW_PATH: /opt/airflow/data/raw/
+      DATA_STAGING_PATH: /opt/airflow/data/
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/data:/opt/airflow/data
-    command: scheduler  # Ejecutar el scheduler de Airflow
+      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+    command: scheduler
 
 volumes:
-  postgres_data:  # Volumen para persistir datos de Postgres
+  postgres_data:
+

@@ -101,3 +101,7 @@ dist/
 Thumbs.db
 
 
+# Ignore .env with real local environment variables
+.env
+
+

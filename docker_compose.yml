@@ -1,7 +1,6 @@
 version: '3'
 
 services:
-
   # Servicio de base de datos PostgreSQL para Airflow y staging
   postgres:
     image: postgres:13
@@ -13,27 +12,26 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Persistencia de datos de Postgres
 
-
-  # Servicio que inicializa la base de datos de Airflow
+  # Servicio que inicializa la base de datos de Airflow (solo corre una vez)
   airflow-init:
     image: apache/airflow:2.5.1
     depends_on:
       - postgres
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor  # Ejecuta tareas localmente
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow  # Conexión a Postgres
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
     entrypoint: ["/bin/bash", "-c"]
-    command: ["airflow db init"]
+    command: ["airflow db init"]  # Crea tablas y metadatos de Airflow
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/dags:/opt/airflow/dags      # DAGs compartidos
+      - ./airflow/logs:/opt/airflow/logs      # Logs persistentes
+      - ./airflow/plugins:/opt/airflow/plugins  # Plugins personalizados
+      - ./airflow/data:/opt/airflow/data      # Área de staging para CSVs
 
-
- # Webserver de Airflow: interfaz web para ver y ejecutar DAGs
+  # Webserver de Airflow: interfaz web para ver y ejecutar DAGs
   airflow-webserver:
     image: apache/airflow:2.5.1
     depends_on:
@@ -45,12 +43,13 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Exponer UI de Airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-    command: webserver
+      - ./airflow/data:/opt/airflow/data
+    command: webserver  # Iniciar el server web
 
   # Scheduler: orquesta tareas programadas
   airflow-scheduler:
@@ -67,7 +66,8 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-    command: scheduler
+      - ./airflow/data:/opt/airflow/data
+    command: scheduler  # Ejecutar el scheduler de Airflow
 
 volumes:
-  postgres_data:
+  postgres_data:  # Volumen para persistir datos de Postgres

@@ -32,6 +32,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+      - ./scripts:/opt/airflow/scripts
 
   # Webserver de Airflow
   airflow-webserver:
@@ -54,6 +55,8 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+      - ./airflow/scripts:/opt/airflow/scripts
+      - ./requirements.txt:/requirements.txt
     command: webserver
 
   # Scheduler de Airflow
@@ -75,6 +78,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+      - ./scripts:/opt/airflow/scripts
     command: scheduler
 
 volumes:

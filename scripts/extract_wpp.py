@@ -45,7 +45,7 @@ def fetch_and_stage_excel(
 
 if __name__ == '__main__':
     RAW_DIR = os.getenv('DATA_RAW_PATH', 'airflow/data/raw/')
-    STAGING_DIR = os.getenv('DATA_STAGING_PATH', 'airflow/data/')
+    STAGING_DIR = os.getenv('DATA_STAGING_PATH', 'airflow/data/staging/')
 
     RAW = os.path.join(RAW_DIR, 'WPP2024_GEN_F01_DEMOGRAPHIC_INDICATORS_FULL.xlsx')
     OUT = os.path.join(STAGING_DIR, 'staging_population_wpp.csv')

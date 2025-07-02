@@ -28,7 +28,7 @@ def fetch_and_stage_excel(
     ]].rename(columns={
         'Region, subregion, country or area *': 'country_name',
         'Location code': 'country_code',
-        'Total Population, as of 1 January (thousands)': 'population as of 1 juanary'
+        'Total Population, as of 1 January (thousands)': 'population_as_of_1_juanary'
     })
 
     # 3. Añade metadatos
@@ -51,5 +51,9 @@ if __name__ == '__main__':
     OUT = os.path.join(STAGING_DIR, 'staging_population_wpp.csv')
 
     fetch_and_stage_excel(RAW, 'Medium variant', OUT)
+
+    print(f"📌 RAW_DIR: {RAW_DIR}")
+    print(f"📌 STAGING_DIR: {STAGING_DIR}")
+    print(f"📌 Archivo salida: {OUT}")
 
 

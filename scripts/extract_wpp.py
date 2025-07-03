@@ -28,7 +28,7 @@ def fetch_and_stage_excel(
     ]].rename(columns={
         'Region, subregion, country or area *': 'country_name',
         'Location code': 'country_code',
-        'Total Population, as of 1 January (thousands)': 'population_as_of_1_juanary'
+        'Total Population, as of 1 January (thousands)': 'population_as_of_1_january'
     })
 
     # 3. Añade metadatos

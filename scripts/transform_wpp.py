@@ -1,63 +1,56 @@
 import pandas as pd
 import os
-from datetime import date
 from dotenv import load_dotenv
 
-# Carga variables de entorno si las tienes
+# Cargar variables de entorno
 load_dotenv()
 
-def transform_staging(input_csv: str, output_csv: str):
-    """
-    Lee el archivo de staging, realiza limpieza y guarda archivo limpio.
-    """
-
-    print(f"🔍 Leyendo archivo de staging: {input_csv}")
+def transform_staged_csv(input_csv: str, output_csv: str):
+    print(f"📥 Leyendo archivo de staging: {input_csv}")
     df = pd.read_csv(input_csv)
 
-    print("📊 Antes de limpiar:")
+    print(f"📊 Antes de limpiar:")
     print(df.info())
     print(df.head())
 
-    # ================================
-    # 1️⃣ Limpieza básica
-    # ================================
-    # Elimina filas con población nula o país nulo
-    df = df.dropna(subset=['country_name', 'population'])
+    # 1️⃣ Renombra bien si tiene typo
+    if 'population_as_of_1_juanary' in df.columns:
+        df = df.rename(columns={'population_as_of_1_juanary': 'population_as_of_1_january'})
 
-    # Quita espacios en blanco alrededor de los nombres de países
-    df['country_name'] = df['country_name'].str.strip()
+    # 2️⃣ Limpieza básica
+    df['country_name'] = df['country_name'].astype(str).str.strip()
+    df['variant'] = df['variant'].astype(str).str.strip()
 
-    # Asegura que population sea numérica y positiva
-    df['population'] = pd.to_numeric(df['population'], errors='coerce')
-    df = df[df['population'] > 0]
+    # 3️⃣ Convierte población a número
+    df['population_as_of_1_january'] = pd.to_numeric(df['population_as_of_1_january'], errors='coerce')
 
-    # ================================
-    # 2️⃣ Conversión de tipos
-    # ================================
-    df['population'] = df['population'].astype(int)
+    # ⚠️ Haz dropna SOLO de columnas que existan
+    df = df.dropna(subset=['country_name', 'population_as_of_1_january'])
 
-    # ================================
-    # 3️⃣ Añadir metadatos si quieres
-    # ================================
-    df['transformed_at'] = date.today()
+    # 4️⃣ Crear columna 'population'
+    df['population'] = df['population_as_of_1_january'] * 1000
 
-    # ================================
-    # 4️⃣ Guarda el archivo limpio
-    # ================================
+    # 5️⃣ Elimina la columna intermedia
+    df = df.drop(columns=['population_as_of_1_january'])
+
+    # 6️⃣ Reordenar columnas si quieres
+    df = df[['country_code', 'country_name', 'year', 'variant', 'population', 'last_updated']]
+
+    print(f"📊 Transformado: {df.shape[0]} filas")
+    print(df.head())
+
+    # 7️⃣ Guardar transformado
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df.to_csv(output_csv, index=False)
-
-    print(f"✅ Transformación completada. Archivo guardado en {output_csv}")
-    print(f"🔢 Filas finales: {len(df)}")
-
+    print(f"✅ Archivo transformado guardado en: {output_csv}")
 
 if __name__ == '__main__':
-    # Define rutas (puedes usar .env o dejarlas fijas para local)
-    STAGING_PATH = os.getenv('DATA_STAGING_PATH', 'airflow/data/staging/')
-    WAREHOUSE_PATH = os.getenv('DATA_WAREHOUSE_PATH', 'airflow/data/warehouse/')
+    STAGING_DIR = os.getenv('DATA_STAGING_PATH', 'airflow/data/staging/')
+    PROCESSED_DIR = os.getenv('DATA_PROCESSED_PATH', 'airflow/data/processed/')
 
-    input_csv = os.path.join(STAGING_PATH, 'staging_population_wpp.csv')
-    output_csv = os.path.join(WAREHOUSE_PATH, 'population_wpp_clean.csv')
+    IN = os.path.join(STAGING_DIR, 'staging_population_wpp.csv')
+    OUT = os.path.join(PROCESSED_DIR, 'processed_population_wpp.csv')
 
-    transform_staging(input_csv, output_csv)
+    transform_staged_csv(IN, OUT)
+
 

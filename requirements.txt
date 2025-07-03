@@ -1,5 +1,5 @@
 apache-airflow==2.5.1
-pandas
+pandas~=2.3.0
 requests
 dbt-core
 dbt-postgres
@@ -7,4 +7,5 @@ psycopg2-binary
 pandas
 openpyxl
 requests
-python-dotenv
+python-dotenv~=1.1.1
+SQLAlchemy~=1.4.54

@@ -15,7 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Inicializa la base de datos de Airflow
+  # Inicializa la base de datos de Airflow (solo corre una vez)
   airflow-init:
     image: apache/airflow:2.5.1
     container_name: airflow-init
@@ -31,7 +31,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+      - ./airflow/data:/opt/airflow/data
       - ./scripts:/opt/airflow/scripts
 
   # Webserver de Airflow
@@ -47,15 +47,20 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
       DATA_RAW_PATH: /opt/airflow/data/raw/
-      DATA_STAGING_PATH: /opt/airflow/data/
+      DATA_STAGING_PATH: /opt/airflow/data/staging/
+      DATA_PROCESSED_PATH: /opt/airflow/data/processed/
+      PG_USER: airflow
+      PG_PASSWORD: airflow
+      PG_HOST: postgres
+      PG_DB: airflow
     ports:
       - "8080:8080"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
-      - ./airflow/scripts:/opt/airflow/scripts
+      - ./airflow/data:/opt/airflow/data
+      - ./scripts:/opt/airflow/scripts
       - ./requirements.txt:/requirements.txt
     command: webserver
 
@@ -72,15 +77,21 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
       DATA_RAW_PATH: /opt/airflow/data/raw/
-      DATA_STAGING_PATH: /opt/airflow/data/
+      DATA_STAGING_PATH: /opt/airflow/data/staging/
+      DATA_PROCESSED_PATH: /opt/airflow/data/processed/
+      PG_USER: airflow
+      PG_PASSWORD: airflow
+      PG_HOST: postgres
+      PG_DB: airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/data:/opt/airflow/data  # <--- Monta la carpeta de datos
+      - ./airflow/data:/opt/airflow/data
       - ./scripts:/opt/airflow/scripts
     command: scheduler
 
 volumes:
   postgres_data:
+
 

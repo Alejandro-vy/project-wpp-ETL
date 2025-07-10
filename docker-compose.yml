@@ -1,8 +1,4 @@
-version: '3'
-
 services:
-
-  # Servicio de base de datos PostgreSQL para Airflow
   postgres:
     image: postgres:13
     container_name: postgres
@@ -15,15 +11,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Inicializa la base de datos de Airflow (solo corre una vez)
   airflow-init:
-    image: apache/airflow:2.5.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: airflow-init
     depends_on:
       - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
     entrypoint: ["/bin/bash", "-c"]
     command: ["airflow db init"]
@@ -34,9 +31,10 @@ services:
       - ./airflow/data:/opt/airflow/data
       - ./scripts:/opt/airflow/scripts
 
-  # Webserver de Airflow
   airflow-webserver:
-    image: apache/airflow:2.5.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: airflow-webserver
     depends_on:
       - postgres
@@ -44,7 +42,7 @@ services:
     restart: always
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
       DATA_RAW_PATH: /opt/airflow/data/raw/
       DATA_STAGING_PATH: /opt/airflow/data/staging/
@@ -55,18 +53,18 @@ services:
       PG_DB: airflow
     ports:
       - "8080:8080"
+    command: webserver
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/data:/opt/airflow/data
       - ./scripts:/opt/airflow/scripts
-      - ./requirements.txt:/requirements.txt
-    command: webserver
 
-  # Scheduler de Airflow
   airflow-scheduler:
-    image: apache/airflow:2.5.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: airflow-scheduler
     depends_on:
       - postgres
@@ -74,7 +72,7 @@ services:
     restart: always
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
       DATA_RAW_PATH: /opt/airflow/data/raw/
       DATA_STAGING_PATH: /opt/airflow/data/staging/
@@ -83,15 +81,13 @@ services:
       PG_PASSWORD: airflow
       PG_HOST: postgres
       PG_DB: airflow
+    command: scheduler
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/data:/opt/airflow/data
       - ./scripts:/opt/airflow/scripts
-    command: scheduler
 
 volumes:
   postgres_data:
-
-
